@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const McdPlugin = require("@makerdao/dai-plugin-mcd");
+const McdPlugin = require("@makerdao/dai-plugin-mcd").default;
 const Maker = require("@makerdao/dai");
 
 async function main() {
@@ -10,6 +10,7 @@ async function main() {
       [McdPlugin, {}] // the second argument can be used to pass options to the plugin
     ]
   });
+
 
   const manager = maker.service('mcd:cdpManager');
   const proxyAddress = maker.service('proxy').currentProxy();
