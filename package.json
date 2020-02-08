@@ -12,6 +12,8 @@
   "dependencies": {
     "@makerdao/dai": "^0.23.1",
     "@makerdao/dai-plugin-mcd": "^1.0.6",
-    "js-yaml": "^3.13.1"
+    "js-yaml": "^3.13.1",
+    "web3": "^1.2.6",
+    "web3-eth": "latest"
   }
 }
