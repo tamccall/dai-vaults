@@ -13,5 +13,5 @@ test("expected return from spreadsheet", () => {
     marketRiskPremium: 0.3816448988
   };
   const er = expectedReturn(params);
-  expect(er).toEqual(0.1808)
+  expect(er).toBeCloseTo(0.1808, 3)
 });
