@@ -1,7 +1,7 @@
 const mathjs = require('mathjs');
 
 var rf = 0;
-var t = 0;
+var t = 1;
 
 function setRiskFree(newRF) {
   rf = newRF;

@@ -1,12 +1,11 @@
 risk_free_rate: 0.0875
-slope_sml: 0.3022563969
 
 bat:
   sigma: 1.430702918
   beta: 0.3017
-  ror: 0.08354930998
+  market_risk_premium: 0.0864
 
 eth:
   sigma: 1.020023681
   beta: 0.6425
-  ror: -9.99%
+  market_risk_premium: 0.3771767045
