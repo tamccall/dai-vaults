@@ -10,6 +10,7 @@ test("expected return from spreadsheet", () => {
     k: 125000000,
     sigma: 1.02,
     beta: 0.6425,
+    marketRiskPremium: 0.3816448988
   };
   const er = expectedReturn(params);
   expect(er).toEqual(0.1808)
