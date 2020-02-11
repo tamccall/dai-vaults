@@ -12,12 +12,10 @@
   "dependencies": {
     "@makerdao/dai": "^0.23.1",
     "@makerdao/dai-plugin-mcd": "^1.0.6",
-    "apollo-link": "^1.2.13",
-    "ethers": "^4.0.44",
+    "bignumber.js": "^9.0.0",
     "js-yaml": "^3.13.1",
     "mathjs": "^6.6.0",
-    "web3": "^1.2.6",
-    "web3-eth": "latest"
+    "web3": "^1.2.6"
   },
   "devDependencies": {
     "jest": "^25.1.0"
