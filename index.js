@@ -7,6 +7,7 @@ const McdPlugin = require('@makerdao/dai-plugin-mcd').default;
 const {ETH, BAT} = require('@makerdao/dai-plugin-mcd');
 const addr = require('./addresses');
 const api = require('etherscan-api').init(process.env.ETHERSCAN_KEY);
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 
 async function asyncForEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
@@ -20,8 +21,8 @@ async function main() {
   eRoR.setRiskFree(constants.risk_free_rate);
   const mcdOptions = {
     cdpTypes: [
-      {currency: ETH, ilk: "ETH_A"},
-      {currency: BAT, ilk: "BAT_A"}
+      {currency: ETH, ilk: "ETH-A"},
+      {currency: BAT, ilk: "BAT-A"}
     ]
   };
   const maker = await Maker.create("http", {
@@ -32,6 +33,18 @@ async function main() {
   });
   const manager = maker.service('mcd:cdpManager');
   const block  = await maker.service('web3').blockNumber();
+  const csvWriter = createCsvWriter({
+    path: "out.csv",
+    header: [
+      {id: "id", title: "id"},
+      {id: "ilk", title: "ilk"},
+      {id: "addr", title: "proxy_address"},
+      {id: "collateralAmount", title: "collateral_amount"},
+      {id: "collateralValue", title: "collateral_value_usd"},
+      {id: "debtValue", title: "debt_value"},
+    ]
+  });
+
   console.log("Getting proxies created before block", block);
   // Get the transaction list for the PROXY_REGISTRY contract from etherscan
   let pageNumber = 1;
@@ -57,6 +70,7 @@ async function main() {
     console.log("waiting on proxy addresses. page: ", pageNumber);
     let proxyAddresses = await Promise.all(proxyPromises);
     proxyAddresses = proxyAddresses.filter(e => e != null);
+
     await asyncForEach(proxyAddresses, async addr => {
       console.log("getting cdps", addr);
       const data = await manager.getCdpIds(addr);
@@ -69,6 +83,17 @@ async function main() {
           vault.collateralizationRatio,
           vault.liquidationPrice
         ].map(x => x.toString()));
+
+        const row = {
+          id: cdp.id,
+          ilk: cdp.ilk,
+          addr: addr,
+          collateralAmount: vault.collateralAmount._amount,
+          collateralValue: vault.collateralValue._amount,
+          debtValue: vault.debtValue._amount,
+        };
+
+        await csvWriter.writeRecords([row]);
       })
     });
 

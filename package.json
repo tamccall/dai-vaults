@@ -13,6 +13,8 @@
     "@makerdao/dai": "^0.23.1",
     "@makerdao/dai-plugin-mcd": "^1.0.6",
     "bignumber.js": "^9.0.0",
+    "csv-parser": "^2.3.2",
+    "csv-writer": "^1.6.0",
     "etherscan-api": "^10.0.5",
     "js-yaml": "^3.13.1",
     "mathjs": "^6.6.0",
