@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-const jsyaml = require('js-yaml');
-const eRoR = require('./expected-value');
 const fs = require('fs');
 const Maker = require('@makerdao/dai');
 const McdPlugin = require('@makerdao/dai-plugin-mcd').default;
@@ -8,6 +6,7 @@ const {ETH, BAT} = require('@makerdao/dai-plugin-mcd');
 const addr = require('./addresses');
 const api = require('etherscan-api').init(process.env.ETHERSCAN_KEY);
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const fileName = "out.csv";
 
 async function asyncForEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
@@ -16,9 +15,11 @@ async function asyncForEach(array, callback) {
 }
 
 async function main() {
-  const constants = jsyaml.load(fs.readFileSync('./constants.yml', 'utf8'));
-  console.log(constants);
-  eRoR.setRiskFree(constants.risk_free_rate);
+  console.log("deleting old file if exists");
+  if (fs.existsSync(fileName)) {
+    console.log("file exists deleting...");
+    await fs.unlink(fileName);
+  }
   const mcdOptions = {
     cdpTypes: [
       {currency: ETH, ilk: "ETH-A"},
@@ -34,11 +35,11 @@ async function main() {
   const manager = maker.service('mcd:cdpManager');
   const block  = await maker.service('web3').blockNumber();
   const csvWriter = createCsvWriter({
-    path: "out.csv",
+    path: fileName,
     header: [
       {id: "id", title: "id"},
-      {id: "ilk", title: "ilk"},
       {id: "addr", title: "proxy_address"},
+      {id: "ilk", title: "ilk"},
       {id: "collateralAmount", title: "collateral_amount"},
       {id: "collateralValue", title: "collateral_value_usd"},
       {id: "debtValue", title: "debt_value"},
