@@ -5,7 +5,8 @@
   "main": "query.js",
   "scripts": {
     "test": "jest",
-    "query": "query.js"
+    "query": "query.js",
+    "calc": "calc.js"
   },
   "keywords": [],
   "author": "",
