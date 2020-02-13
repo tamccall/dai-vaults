@@ -14,51 +14,25 @@ async function asyncForEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
     await callback(array[index], index, array);
   }
-};
+}
 
-async function main() {
-  console.log("deleting old file if exists");
-  if (fs.existsSync(fileName)) {
-    console.log("file exists deleting...");
-    await fs.unlinkSync(fileName);
-  }
-  const SAI = require("@makerdao/currency").createCurrency('SAI');
-  const mcdOptions = {
-    cdpTypes: [
-      {currency: ETH, ilk: "ETH-A"},
-      {currency: BAT, ilk: "BAT-A"},
-      {currency: SAI, ilk: "SAI"}
-    ]
-  };
-  const maker = await Maker.create("http", {
-    url: process.env.KOVAN_URL,
-    plugins: [
-      [McdPlugin, mcdOptions]
-    ]
-  });
-  const manager = maker.service('mcd:cdpManager');
-  const block  = await maker.service('web3').blockNumber();
-  const csvWriter = createCsvWriter({
-    path: fileName,
-    header: [
-      {id: "id", title: "id"},
-      {id: "addr", title: "proxy_address"},
-      {id: "ilk", title: "ilk"},
-      {id: "collateralAmount", title: "collateral_amount"},
-      {id: "collateralValue", title: "collateral_value_usd"},
-      {id: "debtValue", title: "debt_value"},
-    ]
-  });
-
-  console.log("Getting proxies created before block", block);
-  // Get the transaction list for the PROXY_REGISTRY contract from etherscan
+async function readTransactions(contractAddress, block, maker, manager, csvWriter) {
   let pageNumber = 1;
   let n = 1;
   let startBlock = 1;
   const offset = 100;
   const sort = "asc";
+
+  console.log({
+    pageNumber,
+    n,
+    startBlock,
+    offset,
+    sort,
+  });
+
   let txlist = await api.account.txlist(
-    addr.PROXY_REGISTRY,
+    contractAddress,
     startBlock,
     block,
     pageNumber,
@@ -105,7 +79,7 @@ async function main() {
       })
     });
 
-    if (maxEtherScanRecords - pageNumber * offset < offset)  {
+    if (maxEtherScanRecords - pageNumber * offset < offset) {
       startBlock = lastBlock;
       pageNumber = 0
     }
@@ -116,7 +90,7 @@ async function main() {
 
     try {
       txlist = await api.account.txlist(
-        addr.PROXY_REGISTRY,
+        contractAddress,
         startBlock,
         block,
         pageNumber,
@@ -128,8 +102,52 @@ async function main() {
       console.log("error calling etherscan", e);
       txlist = [];
     }
-
   }
+
+  console.log("finished for address:", contractAddress);
+}
+
+async function main() {
+  console.log("deleting old file if exists");
+  if (fs.existsSync(fileName)) {
+    console.log("file exists deleting...");
+    await fs.unlinkSync(fileName);
+  }
+  const SAI = require("@makerdao/currency").createCurrency('SAI');
+  const mcdOptions = {
+    cdpTypes: [
+      {currency: ETH, ilk: "ETH-A"},
+      {currency: BAT, ilk: "BAT-A"},
+      {currency: SAI, ilk: "SAI"}
+    ]
+  };
+  const maker = await Maker.create("http", {
+    url: process.env.KOVAN_URL,
+    plugins: [
+      [McdPlugin, mcdOptions]
+    ]
+  });
+  const manager = maker.service('mcd:cdpManager');
+  const block  = await maker.service('web3').blockNumber();
+  const csvWriter = createCsvWriter({
+    path: fileName,
+    header: [
+      {id: "id", title: "id"},
+      {id: "addr", title: "proxy_address"},
+      {id: "ilk", title: "ilk"},
+      {id: "collateralAmount", title: "collateral_amount"},
+      {id: "collateralValue", title: "collateral_value_usd"},
+      {id: "debtValue", title: "debt_value"},
+    ]
+  });
+
+  console.log("Getting proxies created before block", block);
+
+  // Get the transaction list for the PROXY_REGISTRY contract from etherscan
+  //  await readTransactions(addr.PROXY_REGISTRY, block, maker, manager, csvWriter);
+
+  // Get the transaction list for the MIGRATION contract from etherscan
+  await readTransactions(addr.MIGRATION, block, maker, manager, csvWriter);
 }
 
 (async() => {
