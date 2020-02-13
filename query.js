@@ -6,8 +6,12 @@ const {ETH, BAT} = require('@makerdao/dai-plugin-mcd');
 const addr = require('./addresses');
 const api = require('etherscan-api').init(process.env.ETHERSCAN_KEY);
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-const fileName = "out.csv";
+const { BloomFilter } = require('bloom-filters');
 
+const fromFilter = new BloomFilter(1000, 1);
+const proxyFilter = new BloomFilter(1000, 1);
+
+const fileName = "out.csv";
 const maxEtherScanRecords = 100 * 100;
 
 async function asyncForEach(array, callback) {
@@ -45,8 +49,14 @@ async function readTransactions(contractAddress, block, maker, manager, csvWrite
     let proxyPromises =  [];
 
     for (let i = 0; i < txlist.result.length; i++) {
-      proxyPromises.push(maker.service('proxy').getProxyAddress(txlist.result[i].from));
-      lastBlock = parseInt(txlist.result[i].blockNumber)
+      lastBlock = parseInt(txlist.result[i].blockNumber);
+      const from = txlist.result[i].from;
+
+      if (fromFilter.has(from)) {
+        // do nothing
+      } else {
+        proxyPromises.push(maker.service('proxy').getProxyAddress(from));
+      }
     }
 
     console.log("waiting on proxy addresses. page: ", n);
@@ -54,6 +64,12 @@ async function readTransactions(contractAddress, block, maker, manager, csvWrite
     proxyAddresses = proxyAddresses.filter(e => e != null);
 
     await asyncForEach(proxyAddresses, async addr => {
+      if (proxyFilter.has(addr)) {
+        return
+      } else {
+        proxyFilter.add(addr)
+      }
+
       console.log("getting cdps", addr);
       const data = await manager.getCdpIds(addr);
       await asyncForEach(data, async (cdp) => {
