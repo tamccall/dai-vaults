@@ -116,7 +116,7 @@ async function readTransactions(contractAddress, block, maker, manager, csvWrite
     } catch (e) {
       // TODO: more specific error handling. Ie. if not empty list re-raise
       console.log("error calling etherscan", e);
-      txlist = [];
+      return
     }
   }
 
@@ -159,11 +159,11 @@ async function main() {
 
   console.log("Getting proxies created before block", block);
 
-  // Get the transaction list for the PROXY_REGISTRY contract from etherscan
-  //  await readTransactions(addr.PROXY_REGISTRY, block, maker, manager, csvWriter);
-
   // Get the transaction list for the MIGRATION contract from etherscan
   await readTransactions(addr.MIGRATION, block, maker, manager, csvWriter);
+
+  // Get the transaction list for the PROXY_REGISTRY contract from etherscan
+  await readTransactions(addr.PROXY_REGISTRY, block, maker, manager, csvWriter);
 }
 
 (async() => {
