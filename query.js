@@ -114,15 +114,21 @@ async function main() {
     pageNumber++;
     n++;
 
-    // TODO: this throws an error when the list is empty
-    txlist = await api.account.txlist(
-      addr.PROXY_REGISTRY,
-      startBlock,
-      block,
-      pageNumber,
-      offset,
-      sort
-    )
+    try {
+      txlist = await api.account.txlist(
+        addr.PROXY_REGISTRY,
+        startBlock,
+        block,
+        pageNumber,
+        offset,
+        sort
+      )
+    } catch (e) {
+      // TODO: more specific error handling. Ie. if not empty list re-raise
+      console.log("error calling etherscan", e);
+      txlist = [];
+    }
+
   }
 }
 
