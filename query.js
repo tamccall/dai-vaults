@@ -8,22 +8,26 @@ const api = require('etherscan-api').init(process.env.ETHERSCAN_KEY);
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const fileName = "out.csv";
 
+const maxEtherScanRecords = 100 * 100;
+
 async function asyncForEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
     await callback(array[index], index, array);
   }
-}
+};
 
 async function main() {
   console.log("deleting old file if exists");
   if (fs.existsSync(fileName)) {
     console.log("file exists deleting...");
-    await fs.unlink(fileName);
+    await fs.unlinkSync(fileName);
   }
+  const SAI = require("@makerdao/currency").createCurrency('SAI');
   const mcdOptions = {
     cdpTypes: [
       {currency: ETH, ilk: "ETH-A"},
-      {currency: BAT, ilk: "BAT-A"}
+      {currency: BAT, ilk: "BAT-A"},
+      {currency: SAI, ilk: "SAI"}
     ]
   };
   const maker = await Maker.create("http", {
@@ -49,7 +53,8 @@ async function main() {
   console.log("Getting proxies created before block", block);
   // Get the transaction list for the PROXY_REGISTRY contract from etherscan
   let pageNumber = 1;
-  const startBlock = 1;
+  let n = 1;
+  let startBlock = 1;
   const offset = 100;
   const sort = "asc";
   let txlist = await api.account.txlist(
@@ -61,14 +66,16 @@ async function main() {
     sort
   );
 
+  let lastBlock = startBlock;
   while (txlist.result.length > 0 ) {
     let proxyPromises =  [];
 
     for (let i = 0; i < txlist.result.length; i++) {
       proxyPromises.push(maker.service('proxy').getProxyAddress(txlist.result[i].from));
+      lastBlock = parseInt(txlist.result[i].blockNumber)
     }
 
-    console.log("waiting on proxy addresses. page: ", pageNumber);
+    console.log("waiting on proxy addresses. page: ", n);
     let proxyAddresses = await Promise.all(proxyPromises);
     proxyAddresses = proxyAddresses.filter(e => e != null);
 
@@ -98,8 +105,16 @@ async function main() {
       })
     });
 
+    if (maxEtherScanRecords - pageNumber * offset < offset)  {
+      startBlock = lastBlock;
+      pageNumber = 0
+    }
+
     proxyPromises = [];
     pageNumber++;
+    n++;
+
+    // TODO: this throws an error when the list is empty
     txlist = await api.account.txlist(
       addr.PROXY_REGISTRY,
       startBlock,
