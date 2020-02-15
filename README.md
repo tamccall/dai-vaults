@@ -4,7 +4,7 @@ csv file
 
 To do that run
 ```
-MAINNET_URL=https://mainnet.infura.io/v3/yourinfuraproject node query"
+MAINNET_URL=https://mainnet.infura.io/v3/yourinfuraproject node query
 ```
 
 this will write the details of all the dai vaults into a csv file called out.js
