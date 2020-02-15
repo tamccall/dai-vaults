@@ -8,7 +8,6 @@ const val = {};
 const weightedRor = {};
 
 function main() {
-  console.log("start main");
   const c = yaml.safeLoad(fs.readFileSync('./constants.yml', 'utf8'));
   ror.setRiskFree(c.risk_free_rate);
   fs.createReadStream('./out.csv')
@@ -36,11 +35,10 @@ function main() {
       console.log('Weighted Rd:');
       for (const [k, v] of Object.entries(val)) {
         const rD = weightedRor[k];
-        console.log(`${k}:`, rD.dividedBy(v).times(100).toFixed(3))
+        console.log(`${k}: ${rD.dividedBy(v).times(100).toFixed(3)} %`)
       }
     });
 
-  console.log("end main");
 }
 
 main();
