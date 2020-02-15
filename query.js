@@ -30,7 +30,7 @@ async function main() {
     ]
   };
   const maker = await Maker.create("http", {
-    url: process.env.KOVAN_URL,
+    url: process.env.MAINNET_URL,
     plugins: [
       [McdPlugin, mcdOptions]
     ]
