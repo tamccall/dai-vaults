@@ -14,6 +14,8 @@ async function asyncForEach(array, callback) {
 }
 
 async function main() {
+  const addr = require('./addresses');
+
   console.log("deleting old file if exists");
   if (fs.existsSync(fileName)) {
     console.log("file exists deleting...");
@@ -33,7 +35,12 @@ async function main() {
       [McdPlugin, mcdOptions]
     ]
   });
+
+  const web3 = maker.service("web3")._web3;
   const manager = maker.service('mcd:cdpManager');
+  const abi = require('./abi/DssCdpManager');
+  const contract = new web3.eth.Contract(abi, addr.CDP_MANAGER);
+  const cdpi = await contract.methods.cdpi().call();
 
   const csvWriter = createCsvWriter({
     path: fileName,
@@ -47,8 +54,7 @@ async function main() {
     ]
   });
 
-  // TODO: figure out the number of vaults by calling contracts
-  const allIds = [...Array(5000).keys()].slice(1).map(x => {
+  const allIds = [...Array(parseInt(cdpi)).keys()].slice(1).map(x => {
     return {id: x}
   });
 
@@ -64,6 +70,7 @@ async function main() {
         collateralValue: vault.collateralValue._amount,
         debtValue: vault.debtValue._amount,
       };
+      console.log(`Vault ${cdp.id}:`, row);
       await csvWriter.writeRecords([row]);
     } catch (e) {
       console.error(e)
