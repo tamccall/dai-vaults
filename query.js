@@ -34,6 +34,7 @@ async function main() {
     ]
   });
   const manager = maker.service('mcd:cdpManager');
+
   const csvWriter = createCsvWriter({
     path: fileName,
     header: [

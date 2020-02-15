@@ -1,11 +1,11 @@
 risk_free_rate: 0.075
 
-bat:
+BAT-A:
   sigma: 1.430702918
   beta: 0.3017
   market_risk_premium: 0.08641588388
 
-eth:
+ETH-A:
   sigma: 1.020023681
   beta: 0.6425
   market_risk_premium: 0.3771767045
