@@ -1,7 +1,7 @@
 const mathjs = require('mathjs');
 
-var rf = 0;
-var t = 1;
+let rf = 0;
+let t = 1;
 
 function setRiskFree(newRF) {
   rf = newRF;
@@ -17,10 +17,15 @@ function cdfNormal (x) {
   return (1 - mathjs.erf((mean - x ) / (Math.sqrt(2) * standardDeviation))) / 2
 }
 
-function expectedReturn(params) {
-  // =LN(V_ETH/(K_ETH*EXP(-rf_ETH*T_ETH))/(SIGMA_ETH*SQRT(T_ETH)))
-  const {v, k, sigma, beta, marketRiskPremium} = params;
-  const d1 = Math.log(v / (k * Math.exp(-rf*t))/sigma * Math.sqrt(t));
+function getYield(params) {
+  const {k} = params;
+  const { marketValueDebt } = merton(params);
+  return Math.log(k / marketValueDebt);
+}
+
+function merton(params) {
+  const {v, k, sigma } = params;
+  const d1 = Math.log(v / (k * Math.exp(-rf * t)) / sigma * Math.sqrt(t));
   const d2 = d1 - sigma * Math.sqrt(t);
 
   const nD1 = cdfNormal(d1, 0, 1);
@@ -28,6 +33,12 @@ function expectedReturn(params) {
 
   const marketValueEquity = v * nD1 - k * Math.exp(-rf * t) * nD2;
   const marketValueDebt = v - marketValueEquity;
+  return {nD1, nD2, marketValueDebt};
+}
+
+function expectedReturn(params) {
+  const { beta, marketRiskPremium} = params;
+  const {nD1, marketValueDebt} = merton(params);
 
   const risklessDebt = k * Math.exp(-rf*t);
   const putPrice =  risklessDebt - marketValueDebt;
@@ -40,5 +51,6 @@ function expectedReturn(params) {
 exports.setRiskFree = setRiskFree;
 exports.setT = setT;
 exports.expectedReturn = expectedReturn;
+exports.getYeild = getYield;
 
 

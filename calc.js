@@ -20,11 +20,10 @@ function main() {
         return
       }
 
-      const rD = ror.expectedReturn({
+      const rD = ror.getYeild({
         ...c[row.ilk],
         k: k.toNumber(),
         v: v.toNumber(),
-        marketRiskPremium: c[row.ilk].market_risk_premium
       });
 
       const weightedRd = new BigNumber(rD).times(k);
@@ -32,10 +31,12 @@ function main() {
       weightedRor[row.ilk] = (weightedRor[row.ilk] && weightedRor[row.ilk].plus(weightedRd)) || weightedRd
     })
     .on('end', () => {
-      console.log('Weighted Rd:');
+      console.log('Weighted Rd, Spread:');
       for (const [k, v] of Object.entries(val)) {
         const rD = weightedRor[k];
-        console.log(`${k}: ${rD.dividedBy(v).times(100).toFixed(3)} %`)
+        const avgYield = rD.dividedBy(v);
+        const spread = avgYield.minus(c.risk_free_rate);
+        console.log(`${k}: ${avgYield.times(100).toFixed(3)}%, ${spread.times(100).toFixed(3)}%`)
       }
     });
 
