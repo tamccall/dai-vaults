@@ -31,7 +31,7 @@ function main() {
       weightedRor[row.ilk] = (weightedRor[row.ilk] && weightedRor[row.ilk].plus(weightedRd)) || weightedRd
     })
     .on('end', () => {
-      console.log('Weighted Rd, Spread:');
+      console.log('Weighted SF, Spread:');
       for (const [k, v] of Object.entries(val)) {
         const rD = weightedRor[k];
         const avgYield = rD.dividedBy(v);
