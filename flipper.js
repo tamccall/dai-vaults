@@ -37,11 +37,10 @@ Flipper.prototype._getPrice = async function _getPrice(blockNumber) {
 
 Flipper.prototype.getEvents = async function getEvents(stream) {
   const lastBlock = await this.web3.eth.getBlockNumber();
-  let since = FIRST_BLOCK;
-  for (let next = since + PAGE; next < lastBlock; next = next + PAGE) {
-    await this.flipContract.getPastEvents("allEvents", {
-      fromBlock: since,
-      toBlock: next,
+  const readEvents = async (flipContract, fromBlock, toBlock) => {
+    await flipContract.getPastEvents("allEvents", {
+      fromBlock: fromBlock,
+      toBlock: toBlock,
     }, (err, res) => {
       if (err) {
         throw err;
@@ -49,19 +48,15 @@ Flipper.prototype.getEvents = async function getEvents(stream) {
 
       console.log("Number of results", res.length);
     });
+  };
+
+  let since = FIRST_BLOCK;
+  for (let next = since + PAGE; next < lastBlock; next = next + PAGE) {
+    await readEvents(this.flipContract, since, next);
     since = next;
   }
 
-  await this.flipContract.getPastEvents("allEvents", {
-    fromBlock: since,
-    toBlock: lastBlock,
-  }, (err, res) => {
-    if (err) {
-      throw err;
-    }
-
-    console.log("Number of results", res.length);
-  });
+  await readEvents(this.flipContract, since, lastBlock);
 };
 
 exports.Flipper = Flipper;
