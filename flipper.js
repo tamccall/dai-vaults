@@ -8,6 +8,7 @@ const PAGE = Math.floor( DESIRED_EVENTS / EVENTS_PER_BLOCK );
 // Event Topics
 const DEAL = "0xc959c42b00000000000000000000000000000000000000000000000000000000";
 const DENT = "0x5ff3a38200000000000000000000000000000000000000000000000000000000";
+const TEND = "0x4b43ed1200000000000000000000000000000000000000000000000000000000";
 
 const FIRST_BLOCK = 8865649;
 const TEN_TO_18 = new BigNumber('1e+18');
@@ -29,7 +30,7 @@ function Flipper(web3, flipperAddr, osmAddr) {
   this.flipContract = flipContract;
   this.osmContract = osmContract;
   this.kicks = new Map();
-  this.dents = new Map();
+  this.bids = new Map();
 }
 
 Flipper.prototype._getPrice = async function _getPrice(blockNumber) {
@@ -75,26 +76,49 @@ Flipper.prototype.getEvents = async function getEvents(f) {
 
       if (event.event === "Kick") {
         const flipId = parseInt(event.returnValues.id, 10);
+        const gemPrice = await me._getPrice(event.blockNumber);
+
+        let lot = new BigNumber(event.returnValues.lot).dividedBy(LOT_DIVISOR);
         const kick = {
           usr: event.returnValues.usr,
           tab: new BigNumber(event.returnValues.tab).dividedBy(TAB_DIVISOR),
-          lot: new BigNumber(event.returnValues.lot).dividedBy(LOT_DIVISOR),
+          lot,
+          lotPrice: lot.times(gemPrice),
           kickBlock: event.blockNumber,
           kickDate: blockDates.get(event.blockNumber),
         };
 
         me.kicks.set(flipId, kick);
-      } else if (event.raw.topics[0] === DENT) {
-        const flipId = parseInt(event.raw.topics[2], 16);
-        if (!me.dents.has(flipId)) {
-          me.dents.set(flipId, [])
-        }
+        continue
+      }
 
+      const flipId = parseInt(event.raw.topics[2], 16);
+      if (!me.bids.has(flipId)) {
+        me.bids.set(flipId, [])
+      }
+
+      if (event.raw.topics[0] === TEND) {
         const raw = event.raw.data.slice(289, -248);
         const bid = new BigNumber(raw, 16).dividedBy(BID_DIVISOR);
+        const lot = new BigNumber(event.raw.topics[3], 16).dividedBy(TEN_TO_18);
 
-        me.dents.get(flipId).push({
+        me.bids.get(flipId).push({
           bid,
+          lot,
+          bidPrice: bid.dividedBy(lot),
+          block: event.blockNumber,
+          date: blockDates.get(event.blockNumber)
+        })
+
+      } else if (event.raw.topics[0] === DENT) {
+        const raw = event.raw.data.slice(289, -248);
+        const bid = new BigNumber(raw, 16).dividedBy(BID_DIVISOR);
+        const lot = new BigNumber(event.raw.topics[3], 16).dividedBy(TEN_TO_18);
+
+        me.bids.get(flipId).push({
+          bid,
+          lot,
+          bidPrice: bid.dividedBy(lot),
           block: event.blockNumber,
           date: blockDates.get(event.blockNumber)
         })
@@ -102,13 +126,14 @@ Flipper.prototype.getEvents = async function getEvents(f) {
       } else if (event.raw.topics[0] === DEAL) {
         const flipId = parseInt(event.raw.topics[2], 16);
         const price = await me._getPrice(event.blockNumber);
-
+        const bids = me.bids.get(flipId) || [];
         const deal = {
-          price,
+          gemPrice: price,
           dealBlock: event.blockNumber,
           dealDate: blockDates.get(event.blockNumber),
           kick: me.kicks.get(flipId),
-          dents: me.dents.get(flipId)
+          flipId,
+          bids
         };
 
         f(deal);
