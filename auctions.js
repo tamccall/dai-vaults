@@ -23,7 +23,9 @@ async function main() {
   const addr = require('./addresses');
 
   const flip = new Flipper(web3, addr.MCD_FLIP_ETH_A, addr.VAL_ETH);
-  await flip.getEvents(null);
+  await flip.getEvents((event) => {
+    console.log("event",event)
+  });
 }
 
 (async() => {
