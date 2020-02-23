@@ -1,14 +1,21 @@
 const BigNumber = require('bignumber.js');
 
+// Used for iterating
 const EVENTS_PER_BLOCK = 0.002835741676158897;
 const DESIRED_EVENTS = 1000;
 const PAGE = Math.floor( DESIRED_EVENTS / EVENTS_PER_BLOCK );
+
+// Event Topics
 const DEAL = "0xc959c42b00000000000000000000000000000000000000000000000000000000";
+const DENT = "0x5ff3a38200000000000000000000000000000000000000000000000000000000";
+
 const FIRST_BLOCK = 8865649;
 const TEN_TO_18 = new BigNumber('1e+18');
 const LOT_DIVISOR = TEN_TO_18;
 const TAB_DIVISOR = new BigNumber('1e+27').times(TEN_TO_18);
 const BID_DIVISOR = TAB_DIVISOR;
+
+const blockDates = new Map();
 
 function Flipper(web3, flipperAddr, osmAddr) {
   const abiFlipper = require('./abi/Flipper');
@@ -21,6 +28,8 @@ function Flipper(web3, flipperAddr, osmAddr) {
   this.web3 = web3;
   this.flipContract = flipContract;
   this.osmContract = osmContract;
+  this.kicks = new Map();
+  this.dents = new Map();
 }
 
 Flipper.prototype._getPrice = async function _getPrice(blockNumber) {
@@ -55,8 +64,7 @@ Flipper.prototype.getEvents = async function getEvents(f) {
       }
     });
 
-    const blockDates = new Map();
-    const kicks = new Map();
+
     for (let i = 0; i < res.length; i++) {
       const event = res[i];
       if (!blockDates.has(event.blockNumber)) {
@@ -75,18 +83,32 @@ Flipper.prototype.getEvents = async function getEvents(f) {
           kickDate: blockDates.get(event.blockNumber),
         };
 
-        kicks.set(flipId, kick);
-        console.log("found a kick", kick);
+        me.kicks.set(flipId, kick);
+      } else if (event.raw.topics[0] === DENT) {
+        const flipId = parseInt(event.raw.topics[2], 16);
+        if (!me.dents.has(flipId)) {
+          me.dents.set(flipId, [])
+        }
+
+        const raw = event.raw.data.slice(289, -248);
+        const bid = new BigNumber(raw, 16).dividedBy(BID_DIVISOR);
+
+        me.dents.get(flipId).push({
+          bid,
+          block: event.blockNumber,
+          date: blockDates.get(event.blockNumber)
+        })
+
       } else if (event.raw.topics[0] === DEAL) {
+        const flipId = parseInt(event.raw.topics[2], 16);
         const price = await me._getPrice(event.blockNumber);
-        const bidString = event.raw.data.slice(289, -248);
-        const bid = new BigNumber(bidString).dividedBy(BID_DIVISOR);
 
         const deal = {
           price,
-          bid,
           dealBlock: event.blockNumber,
           dealDate: blockDates.get(event.blockNumber),
+          kick: me.kicks.get(flipId),
+          dents: me.dents.get(flipId)
         };
 
         f(deal);
@@ -97,7 +119,7 @@ Flipper.prototype.getEvents = async function getEvents(f) {
   let since = FIRST_BLOCK;
   for (let next = since + PAGE; next < lastBlock; next = next + PAGE) {
     await readEvents(since, next);
-    since = next;
+    since = next + 1;
   }
 
   await readEvents(since, lastBlock);
