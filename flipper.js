@@ -20,7 +20,8 @@ function Flipper(web3, flipperAddr, osmAddr) {
 }
 
 Flipper.prototype._getPrice = async function _getPrice(blockNumber) {
-  await this.osmContract.getPastEvents("LogEvent", {
+  let out = undefined;
+  await this.osmContract.getPastEvents("LogValue", {
     fromBlock: blockNumber - 600,
     toBlock: blockNumber
   }, (err, res) => {
@@ -31,23 +32,32 @@ Flipper.prototype._getPrice = async function _getPrice(blockNumber) {
     const mostRecent = res.pop();
     const priceInWei = this.web3.utils.toBN(mostRecent.returnValues[0]);
     const priceString = this.web3.utils.fromWei(priceInWei);
-    return new BigNumber(priceString);
-  })
+    out =  new BigNumber(priceString);
+  });
+
+  return out;
 };
 
 Flipper.prototype.getEvents = async function getEvents(stream) {
   const lastBlock = await this.web3.eth.getBlockNumber();
+  const me = this;
   const readEvents = async (flipContract, fromBlock, toBlock) => {
-    await flipContract.getPastEvents("allEvents", {
+    const res = await flipContract.getPastEvents("allEvents", {
       fromBlock: fromBlock,
       toBlock: toBlock,
-    }, (err, res) => {
+    }, (err) => {
       if (err) {
         throw err;
       }
-
-      console.log("Number of results", res.length);
     });
+
+    for (let i = 0; i < res.length; i++) {
+      const event = res[i];
+      if (event.raw.topics[0] === DEAL) {
+        const price = await me._getPrice(event.blockNumber);
+        console.info("price", price.toFixed(3))
+      }
+    }
   };
 
   let since = FIRST_BLOCK;
