@@ -105,7 +105,7 @@ Flipper.prototype.getEvents = async function getEvents(f) {
         me.bids.get(flipId).push({
           bid,
           lot,
-          bidPrice: bid.dividedBy(lot),
+          gemPrice: bid.dividedBy(lot),
           block: event.blockNumber,
           date: blockDates.get(event.blockNumber)
         })
@@ -118,7 +118,7 @@ Flipper.prototype.getEvents = async function getEvents(f) {
         me.bids.get(flipId).push({
           bid,
           lot,
-          bidPrice: bid.dividedBy(lot),
+          gemPrice: bid.dividedBy(lot),
           block: event.blockNumber,
           date: blockDates.get(event.blockNumber)
         })

@@ -28,14 +28,11 @@ async function main() {
     const askPricePerEth = deal.kick.tab.dividedBy(deal.kick.lot);
     const winningBid = deal.bids[deal.bids.length - 1];
     if (winningBid) {
-      const bidPrice = winningBid.bidPrice;
-      const loss = askPricePerEth.minus(bidPrice);
-      const lossPercent = loss.dividedBy(askPricePerEth);
-
-      console.log(`Flip ${deal.flipId}. Lost: ${lossPercent.times(100).toFixed(3)}%`)
+      const loss = winningBid.gemPrice.minus(deal.gemPrice).dividedBy(deal.gemPrice);
+      console.log(`Flip ${deal.flipId}. Lost: ${loss.times(100).toFixed(3)}`)
     } else {
-      const lossPercent = new BigNumber(-1);
-      console.log(`Flip ${deal.flipId}. Lost: ${lossPercent.times(100).toFixed(3)}%`)
+      const loss = new BigNumber(-1);
+      console.log(`Flip ${deal.flipId}. Lost: ${loss.times(100).toFixed(3)}`)
     }
 
   });
