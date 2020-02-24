@@ -9,14 +9,18 @@ const weightedRor = {};
 
 function main() {
   const c = yaml.safeLoad(fs.readFileSync('./constants.yml', 'utf8'));
+  let n = 0;
+  let closed = 0;
   ror.setRiskFree(c.risk_free_rate);
   fs.createReadStream('./out.csv')
     .pipe(csv())
     .on('data', (row) => {
       // const {v, k, sigma, beta, marketRiskPremium} = params;
+      n++;
       const v = BigNumber(row.collateral_value_usd);
       const k = BigNumber(row.debt_value);
       if (!k.gt(zero)) {
+        closed++;
         return
       }
 
@@ -39,7 +43,6 @@ function main() {
         console.log(`${k}: ${avgYield.times(100).toFixed(3)}%, ${spread.times(100).toFixed(3)}%`)
       }
     });
-
 }
 
 main();
