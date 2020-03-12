@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "query": "query.js",
-    "calc": "calc.js"
+    "calc": "calc.js",
+    "auctions": "auctions.js"
   },
   "keywords": [],
   "author": "",

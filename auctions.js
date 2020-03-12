@@ -120,8 +120,8 @@ async function main() {
     totalLoss = totalLoss.plus(loss);
   };
 
-  ethPromise = flipETH.getEvents(callback);
-  batPromise = flipBAT.getEvents(callback);
+  const ethPromise = flipETH.getEvents(callback);
+  const batPromise = flipBAT.getEvents(callback);
 
   await Promise.all([ethPromise, batPromise]);
   console.log("Average Loss", totalLoss.dividedBy(n).times(100).toFixed(3));
